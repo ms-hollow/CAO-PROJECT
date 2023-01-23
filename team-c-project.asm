@@ -1,7 +1,7 @@
 
 data segment   
      
-     FIRSTDIGIT DB ? 
+     FIRSTDIGIT DB 1 DUP(?) 
      STRING DB "STRING$"
      pkey db "press any key...$"
      clearASCII DB "                          "
@@ -85,7 +85,8 @@ GREEN:
 	
 START   ENDP
 
-    
+
+; GET INPUT USING KEYBOARD    
 NEXT:
       
     MOV CX, 6
@@ -125,8 +126,7 @@ DISPLAY_DIGIT:
 	MOV DX, BX	; ASCII Display
 	out DX, AL
 	INC BX
-
-RETURN:	
+	
 	; reset buffer indicator to allow more keys
 	MOV DX, 2083h
 	MOV AL, 00h
@@ -135,10 +135,11 @@ RETURN:
 	LOOP KEYBOARD ; infinite loop
 	RET 
 	
-PUSH_DIGIT:
+PUSH_DIGIT:  
     PUSH BX
-    MOV BX, AX
-    MOV FIRSTDIGIT, AL
+    MOV BX, AX  
+    AND BL,0FH
+    MOV FIRSTDIGIT, BL
     POP BX
     RET
 
