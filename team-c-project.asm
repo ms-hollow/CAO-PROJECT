@@ -5,6 +5,8 @@ data segment
      FIRSTDIGIT DB 1 DUP(?) 
      STRING1 DB "VALID$"   
      STRING2 DB "INVALID$"
+     SLASH DB "\"
+     SDATE DB "DATE: "
      ;pkey db "press any key...$"
      clearASCII DB "                                                      "
      NUMBERS	DB 00111111b, 00000110b, 01011011b, 01001111b, 01100110b, 01101101b, 01111101b, 00000111b, 01111111b, 01101111b,
@@ -15,8 +17,10 @@ data segment
      db "ay ligtas nang nakarating sa Technological University of the Philippines - MANILA", 0Ah, 0Dh
      db "sa oras na (INSERT TIME). ", 0Ah, 0Dh
      db "Maraming Salamat", 0Ah, 0Dh
-     db 13, 9    ; carriage return and vertical tab
-       
+     db 13, 9    ; carriage return and vertical tab 
+     prompt  DB "Time:"    
+     time DB "00:00:00",0 
+     ;        01234567 -index       
 ends
 
 stack segment
@@ -77,9 +81,9 @@ THERMOMETER:
 	MOV DX, 2070h
     MOV CX, 7 
 	
-    cmp BX, 04Eh        ;hex for 38
+    CMP BX, 04Eh        ;hex for 38
     JL GREEN
-    jmp RED
+    JMP RED
     
 RED:
 	MOV AL, 049h 
@@ -116,8 +120,12 @@ GET_ID:
     CALL VERIFY
 	CALL CLEARDISPLAY1
 	CALL CLEARDISPLAY2
-	CALL START_PRINT
-	CALL PRINT
+	CALL DISPLAY_TIME
+	CALL SDATE1 
+	CALL SDATE2
+    CALL DISPLAY_DATE
+	;CALL START_PRINT
+	;CALL PRINT
 	CALL EXIT
     
 KEYBOARD:  
@@ -131,8 +139,8 @@ KEYBOARD:
 	MOV DX, 2082h	    ; read key (8-bit input)
 	IN  AL, DX	
 
-	aam                 ;ASCII adjust after manipulation- divides AL by 10 and stores quotient to AH, Remainder to AL
-    add ax, 3030h       ;adds 3030h to ax para maging ASCIIang hexadecimal
+	AAM                 ;ASCII adjust after manipulation- divides AL by 10 and stores quotient to AH, Remainder to AL
+    ADD ax, 3030h       ;adds 3030h to ax para maging ASCIIang hexadecimal
     
     CMP CX, 6
     JE PUSH_DIGIT
@@ -140,7 +148,7 @@ KEYBOARD:
 DISPLAY_DIGIT:
     
 	MOV DX, BX	        ; ASCII Display
-	out DX, AL
+	OUT DX, AL
 	INC BX
 	
 	; reset buffer indicator to allow more keys
@@ -195,7 +203,7 @@ CLEARDISPLAY1:
 CLEARDISPLAY2:
 
 	MOV AL, clearASCII[SI]
-	out DX,AL
+	OUT DX,AL
 	INC SI
 	INC DX 
 	LOOP CLEARDISPLAY2
@@ -206,31 +214,192 @@ EXIT:
     MOV AH, 4CH
     INT 21H 
     
+    
+; TIME
+	
+DISPLAY_TIME PROC
+    
+     MOV AX, @DATA ;storage ng data segment
+     MOV DS, AX
+     LEA BX, time  ;print yung string time 
+                      
+     CALL GET_TIME  ;get time 
+     CALL ASCII    ;display in ascii lcd                           
+     RET
+     
+DISPLAY_TIME ENDP 
+
+GET_TIME PROC    
+    
+    PUSH AX                      
+    PUSH CX
+                           
+    MOV AH, 2CH  ;get time                
+    INT 21H
+
+    ;store yung hr,time,ss sa al register
+                           
+    MOV AL, CH   ;hour                 
+    CALL CONVERT                  
+    MOV [BX], AX ;add yung value ng hour sa index 0 at 1
+                      
+    MOV AL, CL    ;minute                    
+    CALL CONVERT                  
+    MOV [BX + 3], AX ;add yung value ng minute sa index 3at 4
+                                                             
+    MOV AL, DH    ;seconds                
+    CALL CONVERT                   
+    MOV [BX + 6], AX ;add yung value ng minute sa index 6 at 7
+                                                                       
+    POP CX                        
+    POP AX                        
+    RET
+                               
+GET_TIME ENDP 
+
+;ACII LCD
+
+ASCII PROC
+    mov dx,2040h
+    mov si,0
+    mov cx,48
+    
+NEXT:
+    
+    MOV AL, prompt[si]; print yung nasa string by their index 
+    OUT DX, AL
+    INC SI
+    INC DX
+     
+    LOOP NEXT
+    RET
+
+DISPLAY:
+    
+    MOV AL, time[si]; print yung nasa string by their index 
+    OUT DX, AL
+    INC SI
+    INC DX 
+    LOOP DISPLAY
+    RET
+
+ASCII ENDP
+
+CONVERT PROC     ;convertion to string
+         
+    PUSH DX                      
+    MOV AH, 0                     
+    MOV DL, 10                   
+    DIV DL                        
+    OR AX, 3030H                  
+    POP DX                        
+    RET
+
+CONVERT ENDP  
+
+; DATE 
+SDATE1: 
+
+	MOV DX, 2050h
+	MOV SI, 0
+	MOV CX, 48
+	RET
+
+SDATE2:
+
+	MOV AL, SDATE[SI]
+	out DX,AL
+	INC SI
+	INC DX 
+	LOOP SDATE2
+	RET  
+   
+DISPLAY_DATE:
+
+
+    TAB EQU 9           ;ASCII Code 
+    
+    MOV AH, 2AH         ;hexadecimal to get the system date
+    INT 21H             ;executes
+    
+    ;after this, nalagay na sa designated registers ang date
+    
+    PUSH AX             ;store ax to stack
+    PUSH DX             ;store dx to stack 
+    
+;month 
+    MOV AL, DH          ;copy dh to al (since dh contains the month and al is the register for arithmetic)
+    MOV DX, 2055H
+    CALL CONVERT_DATE 
+    
+;day 
+    POP DX              ;retrieve dx from stack (dl contains day)
+    MOV AL, DL          ;copy dl to al
+    MOV DX, 2057H
+    CALL DISPLAY_SLASH
+    MOV DX, 2058H
+    CALL CONVERT_DATE
+                
+;year      
+         
+    SUB CX, 2000        ;subtract 2000 to cx since it cna only store to digit
+    MOV AX, CX          ;copy cx to al (since cx contains year
+    MOV DX, 2060H
+    CALL DISPLAY_SLASH
+    MOV DX, 2061H
+    CALL CONVERT_DATE 
+    CALL START_PRINT
+    RET
+    
+CONVERT_DATE:                ;function to convert hexadecimal to ASCII
+    
+    AAM                 ;ASCII adjust after manipulation- divides AL by 10 and stores quotient to AH, Remainder to AL
+    ADD AX, 3030h       ;adds 3030h to ax para maging ASCIIang hexadecimal
+                        
+    MOV BX, AX          ;copy ang ax sa bx kasi mababago ang value ng ax dahil sa printing          
+                         
+    MOV AL, BH
+    MOV AH, BL
+    
+    ;MOV DX, 2040h	    ;ASCII LCD Display
+	OUT DX, AX
+	INC DX
+  
+    RET 
+
+DISPLAY_SLASH:  
+
+    PUSH AX
+    MOV SI, 0
+    MOV AL, SLASH[SI]
+	out DX,AL
+	POP AX
+	RET
+
 START_PRINT:  
 
-    mov dl, 12      ; form feed code. new page.
-    mov ah, 5
-    int 21h
+    MOV DL, 12      ; form feed code. new page.
+    MOV AH, 5
+    INT 21H
 
-    mov si, offset msg
-    mov cx, offset msg_end - offset msg
+    MOV SI, OFFSET msg
+    mov cx, OFFSET msg_end - OFFSET msg
 
 PRINT:
-    mov dl, [si]
-    mov ah, 5       ; MS-DOS print function.
-    int 21h
-    inc si	        ; next char.
-    loop print
+    MOV DL, [SI]
+    MOV AH, 5       ; MS-DOS print function.
+    INT 21H
+    INC SI	        ; next char.
+    LOOP PRINT
    
-    mov ax, 0       ; wait for any key...
-    int 16h
+    MOV AX, 0       ; wait for any key...
+    INT 16H
 
-    mov dl, 12      ; form feed code. page out!
-    mov ah, 5
-    int 21h 
-    RET	
-
+    MOV DL, 12      ; form feed code. page out!
+    MOV AH, 5
+    INT 21h 
+    RET	  
+    
 ends   
-
 
 
