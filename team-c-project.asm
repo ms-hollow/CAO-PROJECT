@@ -1,40 +1,86 @@
 NAME "PRINTER" 
 
-DATA SEGMENT   
-     
+DATA SEGMENT
+    
      FIRSTDIGIT DB 1 DUP(?) 
      STRING1 DB "VALID$"   
      STRING2 DB "INVALID$"
-     SLASH DB "\"
-     SDATE DB "DATE: "
      ;PKEY DB "PRESS ANY KEY...$"
      CLEARASCII DB "                                                      "
      NUMBERS	DB 00111111B, 00000110B, 01011011B, 01001111B, 01100110B, 01101101B, 01111101B, 00000111B, 01111111B, 01101111B,
                 DB 01110111B, 01111100B, 00111001B, 01011110B, 01111001B, 01110001B    
      
-     MSG DB "MAGANDANG ARAW!", 0AH, 0DH
+     ID DB "0000000.txt",0 
+     ;      01234567 -index   
+
+     filehandler dw ? 
+     okopen      db 'open ok$'
+     failedopen  db 'error open$'
+
+     handle dw ?                     ;Creates variable to store file handle which identifies the file              
+     text db "TIME IN: " ;creates text to write on file
+     text_size = $ - offset text        ;assign size  
+     SDATE  DB "DATE:" 
+     DATE DB "00\00\00",0 
+ ;            01234567 -INDEX 
+     PROMPT  DB "TIME:" 
+     TIME DB "00:00:00",0 
+ ;            01234567 -INDEX  
+         
+ENDS
+
+
+INFO SEGMENT 
+    
+   MSG DB "MAGANDANG ARAW!", 0AH, 0DH
      DB "ANG IYONG ANAK NA SI (PANGALAN) ", 0AH, 0DH      
      DB "AY LIGTAS NANG NAKARATING SA TECHNOLOGICAL UNIVERSITY OF THE PHILIPPINES - MANILA", 0AH, 0DH
      DB "SA ORAS NA (INSERT TIME). ", 0AH, 0DH
      DB "MARAMING SALAMAT", 0AH, 0DH
      DB 13, 9    ; CARRIAGE RETURN AND VERTICAL TAB  
-     
-     ID DB "0000000.TXT",0 
-     ;      01234567 -INDEX   
+     MSG_END db 0  
+    
+ENDS
 
-     FILEHANDLER DW ? 
-     OKOPEN      DB 'OPEN OK$'
-     FAILEDOPEN  DB 'ERROR OPEN$'
-
-     HANDLE DW ?                     ;CREATES VARIABLE TO STORE FILE HANDLE WHICH IDENTIFIES THE FILE              
-     TEXT DB "TIME IN: " ;CREATES TEXT TO WRITE ON FILE
-     TEXT_SIZE = $ - OFFSET TEXT        ;ASSIGN SIZE  
-     
-     PROMPT  DB "TIME:" 
-     TIME DB "00:00:00",0 
- ;            01234567 -INDEX  
-
-         
+GREETINGS SEGMENT
+    
+Welcome DB 01111111b, 00100000b, 00011000b, 00100000b, 01111111b; w
+        DB 01111111b, 01001001b, 01001001b, 01001001b, 01000001b; E
+        DB 01111111b, 01000000b, 01000000b, 01000000b, 01000000b; L
+        DB 00111110b, 01000001b, 01000001b, 01000001b, 00100010b; C
+        DB 00111110b, 01000001b, 01000001b, 01000001b, 00111110b; O
+        DB 01111111b, 00000010b, 00001100b, 00000010b, 01111111b; M
+        DB 01111111b, 01001001b, 01001001b, 01001001b, 01000001b; E
+        DB 00000000B, 01011111B, 00000000B, 01011111B, 00000000B; !!  
+        
+          ;1          2          3          4          5
+Gate1   DB 00000000b, 00000000b, 00000000b, 00000000b, 00000000b
+        DB 00111110b, 01000001b, 01001001b, 01001001b, 01111010b; G
+        DB 01111110b, 00010001b, 00010001b, 00010001b, 01111110b; A
+        DB 00000001b, 00000001b, 01111111b, 00000001b, 00000001b; T
+        DB 01111111b, 01001001b, 01001001b, 01001001b, 01000001b; E
+        DB 00000000b, 00000000b, 00000000b, 00000000b, 00000000b
+        DB 01000100b, 01000010b, 01111111b, 01000000b, 01000000b; 1
+        DB 00000000b, 00000000b, 00000000b, 00000000b, 00000000b
+                                                                 
+Gate2   DB 00000000b, 00000000b, 00000000b, 00000000b, 00000000b
+        DB 00111110b, 01000001b, 01001001b, 01001001b, 01111010b; G
+        DB 01111110b, 00010001b, 00010001b, 00010001b, 01111110b; A
+        DB 00000001b, 00000001b, 01111111b, 00000001b, 00000001b; T
+        DB 01111111b, 01001001b, 01001001b, 01001001b, 01000001b; E
+        DB 00000000b, 00000000b, 00000000b, 00000000b, 00000000b
+        DB 01000010b, 01100001b, 01010001b, 01001001b, 01000110b; 1
+        DB 00000000b, 00000000b, 00000000b, 00000000b, 00000000b
+        
+Gate3   DB 00000000b, 00000000b, 00000000b, 00000000b, 00000000b
+        DB 00111110b, 01000001b, 01001001b, 01001001b, 01111010b; G
+        DB 01111110b, 00010001b, 00010001b, 00010001b, 01111110b; A
+        DB 00000001b, 00000001b, 01111111b, 00000001b, 00000001b; T
+        DB 01111111b, 01001001b, 01001001b, 01001001b, 01000001b; E
+        DB 00000000b, 00000000b, 00000000b, 00000000b, 00000000b
+        DB 00100010b, 01001001b, 01001001b, 01001001b, 00110110b; 1
+        DB 00000000b, 00000000b, 00000000b, 00000000b, 00000000b
+          ;1234567  
 ENDS
 
 STACK SEGMENT
@@ -120,9 +166,9 @@ GET_ID:
     MOV AL, 00H
     OUT DX, AL
       
-    MOV AX, @DATA ;STORAGE NG DATA SEGMENT
-    MOV DS,AX
-    LEA BX, ID     ;LOAD ADDRESS NG ID
+    mov ax, @DATA ;storage ng data segment
+    mov ds,ax
+    lea bx, ID     ;load address ng ID
     MOV CX, 6   
       
     ;RESET BUFFER INDICATOR TO ALLOW MORE KEYS
@@ -136,42 +182,42 @@ GET_ID:
     ;MAIN    
     
 	CALL KEYBOARD
-	MOV  DX, OFFSET ID 
-    CALL OPEN_FILE
+	mov  dx, offset ID 
+    call OPEN_FILE
     CALL WRITE_FILE
 
 	;CALL DISPLAY_DIGIT
     ;CALL VERIFY
 	CALL CLEARDISPLAY1
 	CALL CLEARDISPLAY2
-	CALL DISPLAY_TIME
-	CALL SDATE1 
-	CALL SDATE2
-    CALL DISPLAY_DATE
-	;CALL START_PRINT
+	CALL DISPLAY_TIME 
+    CALL GET_DATE
+	CALL INIT_DATE   
+	CALL DISP_GATE
+	CALL START_PRINT
 	;CALL PRINT
 	CALL EXIT  
 	
 KEYBOARD:                          
                            
-    MOV DX, 2083H 	; INPUT DATA FROM KEYBOARD (IF BUFFER HAS KEY)
+    MOV DX, 2083h 	; input data from keyboard (if buffer has key)
 	IN  AL, DX    
-	CMP AL, 00H
-	JE  KEYBOARD      	; BUFFER HAS NO KEY, CHECK AGAIN 
+	CMP AL, 00h
+	JE  KEYBOARD      	; buffer has no key, check again 
 	
-	; A NEW KEY WAS PRESSED
-	MOV DX, 2082H	; READ KEY (8-BIT INPUT)
+	; a new key was pressed
+	MOV DX, 2082h	; read key (8-bit input)
 	IN  AL, DX	
 
-	AAM                 ;ASCII ADJUST AFTER MANIPULATION- DIVIDES AL BY 10 AND STORES QUOTIENT TO AH, REMAINDER TO AL
-    ADD AX, 3030H       ;ADDS 3030H TO AX PARA MAGING ASCIIANG HEXADECIMAL
+	aam                 ;ASCII adjust after manipulation- divides AL by 10 and stores quotient to AH, Remainder to AL
+    add ax, 3030h       ;adds 3030h to ax para maging ASCIIang hexadecimal
 
     MOV [BX], AX 
     INC BX 
     
-    ; RESET BUFFER INDICATOR TO ALLOW MORE KEYS
-	MOV DX, 2083H
-	MOV AL, 00H
+    ; reset buffer indicator to allow more keys
+	MOV DX, 2083h
+	MOV AL, 00h
 	OUT DX, AL
 	
     LOOP KEYBOARD
@@ -179,81 +225,82 @@ KEYBOARD:
 ;ASCII LCD
 
 INIT_ASCII:
-    MOV DX,2040H
-    MOV SI,0
-    MOV CX,6
+    mov dx,2040h
+    mov si,0
+    mov cx,6
 
 DISPLAY_ID:
-    MOV AL,ID[SI]; PRINT YUNG NASA STRING BY THEIR INDEX 
-    OUT DX,AL
-    INC SI
-    INC DX 
-    LOOP DISPLAY_ID 
+    mov al,ID[si]; print yung nasa string by their index 
+    out dx,al
+    inc si
+    inc dx 
+    loop DISPLAY_ID 
     RET 
     
 OPEN_FILE:
-    PUSH AX
-    PUSH BX
+    push ax
+    push bx
     
-    CMP CL,21D        
-    JE  CHECK_STATUS
+    cmp cl,21d        
+    je  CHECK_STATUS
 
 CHECK_STATUS:    .
-    MOV AL,0             ;READ ONLY MODE.
-    MOV AH,03DH          ;SERVICE TO OPEN FILE.
-    INT 21H
-    JB  NOTOK            ;ERROR IF CARRY FLAG.
-    JE OK
+    mov al,0             ;READ ONLY MODE.
+    mov ah,03dh          ;SERVICE TO OPEN FILE.
+    int 21h
+    jb  NOTOK            ;ERROR IF CARRY FLAG.
+    je OK
 
 OK:;DISPLAY OK MESSAGE.
-    MOV FILEHANDLER, AX  ;IF NO ERROR, NO JUMP. SAVE FILEHANDLER.
-    MOV DX,OFFSET OKOPEN
-    MOV AH,09H
-    INT 021H
+    mov filehandler, ax  ;IF NO ERROR, NO JUMP. SAVE FILEHANDLER.
+    mov dx,offset okopen
+    mov ah,09h
+    int 021h
     ;GREEN LIGHT   
     MOV DX, 2070H 
     MOV AL, 024H 
     OUT DX, AL          
               
-    JMP ENDOFFILE
-    ; ---------------------------------------------------------------------
+    jmp endOfFile
 
 NOTOK:;DISPLAY ERROR MESSAGE.
-    MOV DX,OFFSET FAILEDOPEN
-    MOV AH,09H
-    INT 021H  
+    mov dx,offset FAILEDOPEN
+    mov ah,09h
+    int 021h  
     ;RED LIGHT
     MOV DX, 2070H
     MOV AL, 049H 
     OUT DX, AL
     
-    JMP EXIT
+    CALL CLEARDISPLAY1
+	CALL CLEARDISPLAY2
+    CALL EXIT
 
-ENDOFFILE:
-    POP BX
-    POP AX
+endOfFile:
+    pop bx
+    pop ax
     RET
 
 WRITE_FILE:
-    MOV AX, CS
-    MOV DX, AX
-    MOV ES, AX
+    mov ax, cs
+    mov dx, ax
+    mov es, ax
     
-    MOV AH, 3CH           ;FUNCTION NUMBER TO CREATE FILE
-    MOV CX, 0
-    MOV DX, OFFSET ID   ;GET OFFSET ADDRESS
-    INT 21H
-    MOV HANDLE, AX   
+    mov ah, 3ch           ;Function number to create file
+    mov cx, 0
+    mov dx, offset ID   ;get offset address
+    int 21h
+    mov handle, ax   
     
-    MOV AH, 40H           ;FUNCTION NUMBER TO WRITE ON FILE
-    MOV BX, HANDLE
-    MOV DX, OFFSET TEXT
-    MOV CX, TEXT_SIZE
-    INT 21H
+    mov ah, 40h           ;Function number to write on file
+    mov bx, handle
+    mov dx, offset text
+    mov cx, text_size
+    int 21h
     
-    MOV AH, 3EH          ;FUNCTION NUMBER TO CLOSE FILE
-    MOV BX, HANDLE
-    INT 21H 
+    mov ah, 3eh          ;Function number to close file
+    mov bx, handle
+    int 21h 
     RET         
     	
 CLEARDISPLAY1: 
@@ -325,7 +372,7 @@ GET_TIME ENDP
 ASCII PROC
     MOV DX,2040H
     MOV SI,0
-    MOV CX,48
+    MOV CX,14
     
 NEXT:
     
@@ -335,15 +382,6 @@ NEXT:
     INC DX
      
     LOOP NEXT
-    RET
-
-DISPLAY:
-    
-    MOV AL, TIME[SI]    ;PRINT YUNG NASA STRING BY THEIR INDEX 
-    OUT DX, AL
-    INC SI
-    INC DX 
-    LOOP DISPLAY
     RET
 
 ASCII ENDP
@@ -361,84 +399,208 @@ CONVERT PROC            ;CONVERTION TO STRING
 CONVERT ENDP  
 
 ; DATE 
-SDATE1: 
-
-	MOV DX, 2050H
-	MOV SI, 0
-	MOV CX, 48
-	RET
-
-SDATE2:
-
-	MOV AL, SDATE[SI]
-	OUT DX,AL
-	INC SI
-	INC DX 
-	LOOP SDATE2
-	RET  
    
-DISPLAY_DATE:
+GET_DATE:
 
-    TAB EQU 9           ;ASCII CODE 
+    TAB EQU 9           ;ASCII CODE  
+    MOV AX, @DATA      ;STORAGE NG DATA SEGMENT
+    MOV DS, AX
+    LEA BX, DATE       ;PRINT YUNG STRING TIME 
     
     MOV AH, 2AH         ;HEXADECIMAL TO GET THE SYSTEM DATE
     INT 21H             ;EXECUTES
     
     ;AFTER THIS, NALAGAY NA SA DESIGNATED REGISTERS ANG DATE
-    
-    PUSH AX             ;STORE AX TO STACK
+
     PUSH DX             ;STORE DX TO STACK 
     
 ;MONTH 
     MOV AL, DH          ;COPY DH TO AL (SINCE DH CONTAINS THE MONTH AND AL IS THE REGISTER FOR ARITHMETIC)
-    MOV DX, 2055H
-    CALL CONVERT_DATE 
+    CALL CONVERT_DATE
+    MOV [BX], AX 
     
 ;DAY 
     POP DX              ;RETRIEVE DX FROM STACK (DL CONTAINS DAY)
     MOV AL, DL          ;COPY DL TO AL
-    MOV DX, 2057H
-    CALL DISPLAY_SLASH
-    MOV DX, 2058H
     CALL CONVERT_DATE
+    MOV [BX+3], AX
                 
 ;YEAR      
-         
+    
     SUB CX, 2000        ;SUBTRACT 2000 TO CX SINCE IT CNA ONLY STORE TO DIGIT
     MOV AX, CX          ;COPY CX TO AL (SINCE CX CONTAINS YEAR
-    MOV DX, 2060H
-    CALL DISPLAY_SLASH
-    MOV DX, 2061H
-    CALL CONVERT_DATE 
-    ;CALL START_PRINT
+    CALL CONVERT_DATE
+    MOV [BX+6], AX
+    MOV DX, 2055H
+	MOV SI, 0
+	MOV CX, 8 
     RET
     
 CONVERT_DATE:           ;FUNCTION TO CONVERT HEXADECIMAL TO ASCII
     
     AAM                 ;ASCII ADJUST AFTER MANIPULATION- DIVIDES AL BY 10 AND STORES QUOTIENT TO AH, REMAINDER TO AL
     ADD AX, 3030H       ;ADDS 3030H TO AX PARA MAGING ASCIIANG HEXADECIMAL
-                        
-    MOV BX, AX          ;COPY ANG AX SA BX KASI MABABAGO ANG VALUE NG AX DAHIL SA PRINTING          
-                         
-    MOV AL, BH
+    PUSH BX                    
+    MOV BX, AX          ;COPY ANG AX SA BX KASI MABABAGO ANG VALUE NG AX DAHIL SA PRINTING                              
+    MOV AL, BH          ;INTERCHANGE VALUES
     MOV AH, BL
-    
-    ;MOV DX, 2040H	    ;ASCII LCD DISPLAY
-	OUT DX, AX
-	INC DX
-    RET 
+    POP BX   
+    RET  
 
-DISPLAY_SLASH:  
+INIT_DATE: 
 
-    PUSH AX
-    MOV SI, 0
-    MOV AL, SLASH[SI]
+	MOV DX, 2050H
+	MOV SI, 0
+	MOV CX, 14         ;SINCE 14 ANG CX, PATI KUNG ANO YUNG NASA BABA NG SDATE NAPI-PRINT NIYA, WHICH IS YUNG MISMONG DATE.
+
+DISPLAY_DATE:
+
+	MOV AL, SDATE[SI]
 	OUT DX,AL
-	POP AX
-	RET
+	INC SI
+	INC DX 
+	LOOP DISPLAY_DATE
+	RET  
 
+
+DISP_GATE PROC    
+
+
+DISP_GATE  ENDP
+    
+    
+    MOV AX, GREETINGS     ;STORAGE NG DATA SEGMENT
+    MOV DS, AX
+    ; CLEAR YUNG PUSH BUTTON    
+    MOV AL, 00h
+	MOV DX, 2080h
+	OUT DX, AL	
+
+INPUT:
+
+	MOV DX, 2080h ; input data from switches
+	IN  AX, DX    ; 16-bit input  
+ 
+	MOV DX, 2000h
+	MOV BX, 00h	 
+	
+	cmp ax, 02h   ;1
+	je GATE1LOOP
+	cmp ax, 04h   ;2
+	je GATE2LOOP
+	cmp ax, 08h
+	je GATE3LOOP
+	
+	JNE INPUT 
+    
+GATE1LOOP:
+    
+	MOV SI, 0
+
+GATE01:
+	MOV AL,Gate1[BX][SI]
+	out dx,al
+	INC SI
+	INC DX
+
+	CMP SI, 5
+	LOOPNE GATE01
+
+	ADD BX, 5
+	CMP BX, 40
+	JL GATE1LOOP
+	JE DOTC 
+	
+	
+GATE2LOOP:
+	MOV SI, 0
+	;MOV CX, 5
+
+GATE02:
+	MOV AL,Gate2[BX][SI]
+	out dx,al
+	INC SI
+	INC DX
+
+	CMP SI, 5
+	LOOPNE GATE02
+
+	ADD BX, 5
+	CMP BX, 40
+	JL GATE2LOOP
+	JE DOTC 
+	
+GATE3LOOP:
+	MOV SI, 0
+	;MOV CX, 5
+
+GATE03:
+	MOV AL,Gate3[BX][SI]
+	out dx,al
+	INC SI
+	INC DX
+
+	CMP SI, 5
+	LOOPNE GATE03
+
+	ADD BX, 5
+	CMP BX, 40
+	JL GATE3LOOP 
+	JE DOTC
+	
+DOTC:	
+
+    MOV DX, 2000h
+	MOV BX, 00h    
+ 
+CLEARLOOP: 
+
+	MOV SI, 0
+	
+CLDISPLAY:
+    
+	MOV AL,00h
+	out dx,al
+	INC SI
+	INC DX
+
+	CMP SI, 5
+	LOOPNE CLDISPLAY
+
+	ADD BX, 5
+	CMP BX, 40 
+	JL CLEARLOOP
+
+DOTW:	
+
+    MOV DX, 2000h
+	MOV BX, 00h
+    
+WELLOOP: 
+
+	MOV SI, 0
+	MOV CX, 5  
+	
+WELDISPLAY:
+
+	MOV AL,Welcome[BX][SI]
+	out dx,al
+	INC SI
+	INC DX
+
+	CMP SI, 5
+	LOOPNE WELDISPLAY
+
+	ADD BX, 5
+	CMP BX, 40
+	JL WELLOOP
+	
+    RET
+	
 START_PRINT:  
-
+    
+    MOV AX, INFO     ;STORAGE NG DATA SEGMENT
+    MOV DS, AX
     MOV DL, 12      ; FORM FEED CODE. NEW PAGE.
     MOV AH, 5
     INT 21H
@@ -452,9 +614,6 @@ PRINT:
     INT 21H
     INC SI	        ; NEXT CHAR.
     LOOP PRINT
-   
-    MOV AX, 0       ; WAIT FOR ANY KEY...
-    INT 16H
 
     MOV DL, 12      ; FORM FEED CODE. PAGE OUT!
     MOV AH, 5
