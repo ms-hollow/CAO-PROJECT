@@ -128,21 +128,21 @@ GET_ID:                     ;GET INPUT USING KEYBOARD
 	CALL EXIT  
 	
 KEYBOARD:                                                                                        
-    MOV DX, 2083h 	        ;input data from keyboard (if buffer has key)
+    MOV DX, 2083h 	        ;INPUT DATA FROM KEYBOARD (IF BUFFER HAS KEY)
 	IN  AL, DX    
 	CMP AL, 00h
-	JE  KEYBOARD      	    ; buffer has no key, check again 
+	JE  KEYBOARD      	    ;BUFFER HAS NO KEY, CHECK AGAIN 
 	                        
-	MOV DX, 2082h	        ; read key (8-bit input)
+	MOV DX, 2082h	        ;READ KEY (8-BIT INPUT)
 	IN  AL, DX	
 
 	AAM                     ;ASCII adjust after manipulation- divides AL by 10 and stores quotient to AH, Remainder to AL
-    ADD AX, 3030h           ;adds 3030h to ax para maging ASCIIang hexadecimal
+    ADD AX, 3030h           ;ADDS 3030H TO AX PARA MAGING ASCIIANG HEXADECIMAL
 
     MOV [BX], AX 
     INC BX 
     
-	MOV DX, 2083h           ;reset buffer indicator to allow more keys
+	MOV DX, 2083h           ;RESET BUFFER INDICATOR TO ALLOW MORE KEYS
 	MOV AL, 00h
 	OUT DX, AL
 	
@@ -159,7 +159,7 @@ KEYBOARD:
     MOV CX,6
 
 DISPLAY_ID:                 
-    mov al,ID[si]           ;print yung nasa string by their index 
+    mov al,ID[si]           ;PRINT YUNG NASA STRING BY THEIR INDEX 
     out dx,al
     inc si
     inc dx 
@@ -333,43 +333,43 @@ DISPLAY_DATE:
 	RET  
 
 WRITE_FILE:                 ;FUNCTION FOR FILE OPERATION
-    mov ax, cs
-    mov dx, ax
-    mov es, ax
+    MOV AX, CS
+    MOV DX, AX
+    MOV ES, AX
+     
+    MOV AH, 3ch             ;create file
+    MOV CX, 0
+    MOV DX, OFFSET ID       ;get offset address
+    INT 21H
+    MOV handle, AX   
     
-    mov ah, 3ch             ;create file
-    mov cx, 0
-    mov dx, offset ID       ;get offset address
-    int 21h
-    mov handle, ax   
+    MOV AH, 40h             ;write on file
+    MOV BX, handle
+    MOV DX, OFFSET SDATE    ;PRINT "DATE" STRING
+    MOV CX, 5
+    INT 21h  
     
-    mov ah, 40h             ;write on file
-    mov bx, handle
-    mov dx, offset SDATE    ;PRINT "DATE" STRING
-    mov cx, 5
-    int 21h  
+    MOV AH, 40h             
+    MOV BX, handle
+    MOV DX, OFFSET DATE     ;DISPLAY DATE
+    MOV CX, 8
+    INT 21h
     
-    mov ah, 40h             
-    mov bx, handle
-    mov dx, offset DATE     ;DISPLAY DATE
-    mov cx, 8
-    int 21h
+    MOV AH, 40h           
+    MOV BX, handle
+    MOV DX, OFFSET TIME_IN  ;PRINT "TIME IN"
+    MOV CX, 9
+    INT 21h  
     
-    mov ah, 40h           
-    mov bx, handle
-    mov dx, offset TIME_IN  ;PRINT "TIME IN"
-    mov cx, 9
-    int 21h  
+    MOV AH, 40h          
+    MOV BX, handle
+    MOV DX, offset TIME     ;PRINT TIME
+    MOV CX, 8
+    INT 21h
     
-    mov ah, 40h          
-    mov bx, handle
-    mov dx, offset TIME     ;PRINT TIME
-    mov cx, 8
-    int 21h
-    
-    mov ah, 3eh             ;CLOSE
-    mov bx, handle
-    int 21h 
+    MOV AH, 3eh             ;CLOSE
+    MOV BX, handle
+    INT 21h 
     RET         
 
 DISP_GATE PROC    
@@ -390,24 +390,23 @@ INPUT:
 	MOV DX, 2000h
 	MOV BX, 00h	 
 	
-	cmp ax, 02h           
-	je GATE1LOOP
-	cmp ax, 04h   
-	je GATE2LOOP
-	cmp ax, 08h
-	je GATE3LOOP
-	
+	CMP AX, 02h           
+	JE GATE1LOOP
+	CMP ax, 04h   
+	JE GATE2LOOP
+	CMP ax, 08h
+	JE GATE3LOOP
 	JNE INPUT 
     
 GATE1LOOP:                  ;FUNCTION FOR GATE 1    
 	MOV SI, 0
 
 GATE01:
-	MOV AL,Gate1[BX][SI]
-	out dx,al
+	MOV AL, Gate1[BX][SI]
+	OUT DX, AL
 	INC SI
 	INC DX
-
+         
 	CMP SI, 5
 	LOOPNE GATE01
 
@@ -421,7 +420,7 @@ GATE2LOOP:                  ;FUNCTION FOR GATE 2
 	
 GATE02:
 	MOV AL,Gate2[BX][SI]
-	out dx,al
+	OUT DX, AL
 	INC SI
 	INC DX
 
@@ -461,7 +460,7 @@ CLEARLOOP:
 CLDISPLAY:
     
 	MOV AL,00h
-	out dx,al
+	OUT DX, AL
 	INC SI
 	INC DX
 
@@ -481,7 +480,7 @@ WELLOOP:                   ;FUNCTION FOR WELCOME DISPLAY
   	
 WELDISPLAY:
 	MOV AL,Welcome[BX][SI]
-	out dx,al
+	OUT DX, AL
 	INC SI
 	INC DX
 
