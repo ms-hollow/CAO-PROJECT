@@ -3,9 +3,7 @@ NAME "PRINTER"
 DATA SEGMENT
     
      FIRSTDIGIT DB 1 DUP(?) 
-     STRING1 DB "VALID$"   
-     STRING2 DB "INVALID$"
-     ;PKEY DB "PRESS ANY KEY...$"
+   
      CLEARASCII DB "                                                      "
      NUMBERS	DB 00111111B, 00000110B, 01011011B, 01001111B, 01100110B, 01101101B, 01111101B, 00000111B, 01111111B, 01101111B,
                 DB 01110111B, 01111100B, 00111001B, 01011110B, 01111001B, 01110001B    
@@ -13,33 +11,22 @@ DATA SEGMENT
      ID DB "0000000.txt",0 
      ;      01234567 -index   
 
-     filehandler dw ? 
-     okopen      db 'open ok$'
-     failedopen  db 'error open$'
-
+     filehandler dw ?  
      handle dw ?                     ;Creates variable to store file handle which identifies the file              
-     text db "TIME IN: " ;creates text to write on file
-     text_size = $ - offset text        ;assign size  
-     SDATE  DB "DATE:" 
-     DATE DB "00\00\00",0 
- ;            01234567 -INDEX  
-     PROMPT  DB "TIME:" 
-     TIME DB "00:00:00",0 
- ;            01234567 -INDEX  
-         
-ENDS
-
-
-INFO SEGMENT 
-    
-   MSG DB "MAGANDANG ARAW!", 0AH, 0DH
-     DB "ANG IYONG ANAK AY ", 0AH, 0DH      
-     DB "LIGTAS NANG NAKARATING SA TECHNOLOGICAL UNIVERSITY OF THE PHILIPPINES - MANILA", 0AH, 0DH
-     DB "SA ORAS NA (INSERT TIME). ", 0AH, 0DH
+     TIME_IN db "TIME IN: "          ;creates text to write on file
+     MSG  DB "MAGANDANG ARAW!", 0AH, 0DH
+     DB "ANG IYONG ANAK AY LIGTAS NANG NAKARATING SA ", 0AH, 0DH      
+     DB "TECHNOLOGICAL UNIVERSITY OF THE PHILIPPINES - MANILA", 0AH, 0DH                                
      DB "MARAMING SALAMAT", 0AH, 0DH
      DB 13, 9    ; CARRIAGE RETURN AND VERTICAL TAB  
-     MSG_END db 0  
-    
+     SDATE  DB "DATE:" 
+     DATE DB "00\00\00 ", 0 
+ ;            01234567 -INDEX  
+     SPACE DB " ", 0AH, 0DH 
+     PROMPT  DB "TIME:" 
+     TIME DB "00:00:00", 0
+ ;            01234567 -INDEX  
+     MSG_END db 0      
 ENDS
 
 STACK SEGMENT
@@ -120,11 +107,7 @@ CHECK_TEMP  ENDP
 ; GET INPUT USING KEYBOARD    
 GET_ID:    
     
-    ; RESET LEDS OUTPUT
-    MOV DX, 2070H
-    MOV AL, 00H
-    OUT DX, AL
-      
+ 
     mov ax, @DATA ;storage ng data segment
     mov ds,ax
     lea bx, ID     ;load address ng ID
@@ -143,18 +126,14 @@ GET_ID:
 	CALL KEYBOARD
 	mov  dx, offset ID 
     call OPEN_FILE
-    CALL WRITE_FILE
-
-	;CALL DISPLAY_DIGIT
-    ;CALL VERIFY
 	CALL CLEARDISPLAY1
 	CALL CLEARDISPLAY2
 	CALL DISPLAY_TIME 
     CALL GET_DATE
+    CALL WRITE_FILE
 	CALL INIT_DATE   
 	CALL DISP_GATE
-	;CALL START_PRINT
-	;CALL PRINT
+	CALL START_PRINT
 	CALL EXIT  
 	
 KEYBOARD:                          
@@ -181,9 +160,11 @@ KEYBOARD:
 	
     LOOP KEYBOARD
     
-;ASCII LCD
-
-INIT_ASCII:
+    ;RESET LEDS OUTPUT
+    MOV DX, 2070H
+    MOV AL, 00H
+    OUT DX, AL
+    ;ASCII LCD
     mov dx,2040h
     mov si,0
     mov cx,6
@@ -212,9 +193,6 @@ CHECK_STATUS:    .
 
 OK:;DISPLAY OK MESSAGE.
     mov filehandler, ax  ;IF NO ERROR, NO JUMP. SAVE FILEHANDLER.
-    mov dx,offset okopen
-    mov ah,09h
-    int 021h
     ;GREEN LIGHT   
     MOV DX, 2070H 
     MOV AL, 024H 
@@ -223,9 +201,7 @@ OK:;DISPLAY OK MESSAGE.
     jmp endOfFile
 
 NOTOK:;DISPLAY ERROR MESSAGE.
-    mov dx,offset FAILEDOPEN
-    mov ah,09h
-    int 021h  
+    
     ;RED LIGHT
     MOV DX, 2070H
     MOV AL, 049H 
@@ -239,28 +215,6 @@ endOfFile:
     pop bx
     pop ax
     RET
-
-WRITE_FILE:
-    mov ax, cs
-    mov dx, ax
-    mov es, ax
-    
-    mov ah, 3ch           ;Function number to create file
-    mov cx, 0
-    mov dx, offset ID   ;get offset address
-    int 21h
-    mov handle, ax   
-    
-    mov ah, 40h           ;Function number to write on file
-    mov bx, handle
-    mov dx, offset text
-    mov cx, text_size
-    int 21h
-    
-    mov ah, 3eh          ;Function number to close file
-    mov bx, handle
-    int 21h 
-    RET         
     	
 CLEARDISPLAY1: 
 
@@ -319,7 +273,7 @@ GET_TIME PROC
     MOV AL, DH          ;SECONDS                
     CALL CONVERT                   
     MOV [BX + 6], AX    ;ADD YUNG VALUE NG MINUTE SA INDEX 6 AT 7
-                                                                      
+                                                                       
     POP CX                        
     POP AX                        
     RET
@@ -421,6 +375,45 @@ DISPLAY_DATE:
 	LOOP DISPLAY_DATE
 	RET  
 
+WRITE_FILE:
+    mov ax, cs
+    mov dx, ax
+    mov es, ax
+    
+    mov ah, 3ch           ;Function number to create file
+    mov cx, 0
+    mov dx, offset ID   ;get offset address
+    int 21h
+    mov handle, ax   
+    
+    mov ah, 40h           ;Function number to write on file
+    mov bx, handle
+    mov dx, offset SDATE  ;Print sa file yung "TIME IN" " na string
+    mov cx, 5
+    int 21h  
+    
+    mov ah, 40h           ;Function number to write on file
+    mov bx, handle
+    mov dx, offset DATE   ;Print sa file yung mismong time
+    mov cx, 8
+    int 21h
+    
+    mov ah, 40h           ;Function number to write on file
+    mov bx, handle
+    mov dx, offset TIME_IN ;Print sa file yung "TIME IN" " na string
+    mov cx, 9
+    int 21h  
+    
+    mov ah, 40h           ;Function number to write on file
+    mov bx, handle
+    mov dx, offset TIME   ;Print sa file yung mismong time
+    mov cx, 8
+    int 21h
+    
+    mov ah, 3eh          ;Function number to close file
+    mov bx, handle
+    int 21h 
+    RET         
 
 DISP_GATE PROC    
 
@@ -558,7 +551,7 @@ WELDISPLAY:
 	
 START_PRINT:  
     
-    MOV AX, INFO     ;STORAGE NG DATA SEGMENT
+    MOV AX, DATA     ;STORAGE NG DATA SEGMENT
     MOV DS, AX
     MOV DL, 12      ; FORM FEED CODE. NEW PAGE.
     MOV AH, 5
@@ -573,7 +566,7 @@ PRINT:
     INT 21H
     INC SI	        ; NEXT CHAR.
     LOOP PRINT
-
+     
     MOV DL, 12      ; FORM FEED CODE. PAGE OUT!
     MOV AH, 5
     INT 21H 
@@ -618,6 +611,5 @@ Gate3   DB 00000000b, 00000000b, 00000000b, 00000000b, 00000000b
         DB 00100010b, 01001001b, 01001001b, 01001001b, 00110110b; 1
         DB 00000000b, 00000000b, 00000000b, 00000000b, 00000000b
           ;1234567  
+    ENDS    
 ENDS
-    
-ENDS   
