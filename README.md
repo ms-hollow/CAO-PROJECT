@@ -4,8 +4,4 @@ A capstone project in partial completion of the course Computer Architecture and
 
 Emu 8086 and its Emulation Kit are used to develop the Digital Security System (UDSS).
 
-Developed by: 
-JOHN PAULO C. ALCANTARA
-ALEXIS GLENN A. ASPIRAS
-ABBEGAIL MILES LEONEN
-LAICA D. YGOT
+Developed by: JOHN PAULO C. ALCANTARA, ALEXIS GLENN A. ASPIRAS, ABBEGAIL MILES LEONEN, and LAICA D. YGOT
