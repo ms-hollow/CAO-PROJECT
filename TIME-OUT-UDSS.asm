@@ -38,8 +38,7 @@ CODE SEGMENT
  	MOV     DS, AX
  	MOV     ES, AX
 
-TAP_INIT: 
-                  ;INIT ASCII
+TAP_INIT:                   ;INIT ASCII
 	MOV DX, 2040h	 
 	MOV SI, 0
 	MOV CX, 13
@@ -106,32 +105,32 @@ KEYBOARD:
     MOV CX,6
 
 DISPLAY_ID:                 
-    mov al,ID[si]           ;print yung nasa string by their index 
-    out dx,al
-    inc si
-    inc dx 
-    loop DISPLAY_ID 
+    MOV AL, ID[SI]           ;print yung nasa string by their index 
+    OUT DX, AL
+    INC SI
+    INC DX 
+    LOOP DISPLAY_ID 
     RET 
     
 OPEN_FILE:
-    push ax
-    push bx    
-    cmp cl,21d        
-    je  CHECK_STATUS
+    PUSH AX
+    PUSH BX    
+    CMP CL, 21d        
+    JE  CHECK_STATUS
 
 CHECK_STATUS:               ;CHECH STATUS OF FILE   
-    mov al,0                ;READ ONLY MODE.
-    mov ah,03dh             ;SERVICE TO OPEN FILE.
-    int 21h
-    jb  NOTOK               ;ERROR IF CARRY FLAG.
-    je OK
+    MOV AL, 0                ;READ ONLY MODE.
+    MOV AH, 03dh             ;SERVICE TO OPEN FILE.
+    INT 21h
+    JB  NOTOK               ;ERROR IF CARRY FLAG.
+    JE OK
 
 OK:                         ;DISPLAY GREEN COLOR IN LED
-    mov filehandler, ax     ;IF NO ERROR, NO JUMP. SAVE FILEHANDLER.  
+    MOV filehandler, AX     ;IF NO ERROR, NO JUMP. SAVE FILEHANDLER.  
     MOV DX, 2070H           ;GREEN LIGHT 
     MOV AL, 024H 
     OUT DX, AL                       
-    jmp endOfFile
+    JMP endOfFile
 
 NOTOK:                      ;DISPLAY RED COLOR IN LED       
     MOV DX, 2070H           ;RED LIGHT
@@ -143,8 +142,8 @@ NOTOK:                      ;DISPLAY RED COLOR IN LED
     CALL EXIT
 
 endOfFile:                  
-    pop bx
-    pop ax
+    POP bx
+    POP ax
     RET
     	
 CLEARDISPLAY1:              
@@ -280,43 +279,43 @@ DISPLAY_DATE:
 	RET  
 
 WRITE_FILE:                 ;FUNCTION FOR FILE OPERATION
-    mov ax, cs
-    mov dx, ax
-    mov es, ax
+    MOV AX, CS
+    MOV DX, AX
+    MOV ES, AX
+     
+    MOV AH, 3ch             ;create file
+    MOV CX, 0
+    MOV DX, OFFSET ID       ;get offset address
+    INT 21H
+    MOV handle, AX   
     
-    mov ah, 3ch             ;create file
-    mov cx, 0
-    mov dx, offset ID       ;get offset address
-    int 21h
-    mov handle, ax   
+    MOV AH, 40h             ;write on file
+    MOV BX, handle
+    MOV DX, OFFSET SDATE    ;PRINT "DATE" STRING
+    MOV CX, 5
+    INT 21h  
     
-    mov ah, 40h             ;write on file
-    mov bx, handle
-    mov dx, offset SDATE    ;PRINT "DATE" STRING
-    mov cx, 5
-    int 21h  
+    MOV AH, 40h             
+    MOV BX, handle
+    MOV DX, OFFSET DATE     ;DISPLAY DATE
+    MOV CX, 8
+    INT 21h
     
-    mov ah, 40h             
-    mov bx, handle
-    mov dx, offset DATE     ;DISPLAY DATE
-    mov cx, 8
-    int 21h
+    MOV AH, 40h           
+    MOV BX, handle
+    MOV DX, OFFSET TIME_IN  ;PRINT "TIME IN"
+    MOV CX, 9
+    INT 21h  
     
-    mov ah, 40h           
-    mov bx, handle
-    mov dx, offset TIME_IN  ;PRINT "TIME IN"
-    mov cx, 9
-    int 21h  
+    MOV AH, 40h          
+    MOV BX, handle
+    MOV DX, offset TIME     ;PRINT TIME
+    MOV CX, 8
+    INT 21h
     
-    mov ah, 40h          
-    mov bx, handle
-    mov dx, offset TIME     ;PRINT TIME
-    mov cx, 8
-    int 21h
-    
-    mov ah, 3eh             ;CLOSE
-    mov bx, handle
-    int 21h 
+    MOV AH, 3eh             ;CLOSE
+    MOV BX, handle
+    INT 21h 
     RET         
 
 DISP_GATE PROC    

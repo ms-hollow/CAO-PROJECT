@@ -159,33 +159,33 @@ KEYBOARD:
     MOV CX,6
 
 DISPLAY_ID:                 
-    mov al,ID[si]           ;PRINT YUNG NASA STRING BY THEIR INDEX 
-    out dx,al
-    inc si
-    inc dx 
-    loop DISPLAY_ID 
+    MOV AL, ID[SI]           ;print yung nasa string by their index 
+    OUT DX, AL
+    INC SI
+    INC DX 
+    LOOP DISPLAY_ID 
     RET 
     
 OPEN_FILE:
-    push ax
-    push bx    
-    cmp cl,21d        
-    je  CHECK_STATUS
+    PUSH AX
+    PUSH BX    
+    CMP CL, 21d        
+    JE  CHECK_STATUS
 
 CHECK_STATUS:               ;CHECH STATUS OF FILE   
-    mov al,0                ;READ ONLY MODE.
-    mov ah,03dh             ;SERVICE TO OPEN FILE.
-    int 21h
-    jb  NOTOK               ;ERROR IF CARRY FLAG.
-    je OK
+    MOV AL, 0                ;READ ONLY MODE.
+    MOV AH, 03dh             ;SERVICE TO OPEN FILE.
+    INT 21h
+    JB  NOTOK               ;ERROR IF CARRY FLAG.
+    JE OK
 
 OK:                         ;DISPLAY GREEN COLOR IN LED
-    mov filehandler, ax     ;IF NO ERROR, NO JUMP. SAVE FILEHANDLER.  
+    MOV filehandler, AX     ;IF NO ERROR, NO JUMP. SAVE FILEHANDLER.  
     MOV DX, 2070H           ;GREEN LIGHT 
     MOV AL, 024H 
     OUT DX, AL                       
-    jmp endOfFile
-
+    JMP endOfFile
+    
 NOTOK:                      ;DISPLAY RED COLOR IN LED       
     MOV DX, 2070H           ;RED LIGHT
     MOV AL, 049H 
