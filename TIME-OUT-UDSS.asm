@@ -1,11 +1,7 @@
-TITLE   8086 Code Template (for EXE file)
- 
-        #MAKE_EXE#   
-
 NAME "PRINTER" 
 
 DATA SEGMENT
-    
+     
      FIRSTDIGIT DB 1 DUP(?) 
      TAP_MSG DB 'TAP YOUR CARD'
      CLEARASCII DB "                                                      "
