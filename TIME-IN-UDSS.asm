@@ -1,5 +1,9 @@
-NAME "PRINTER" 
+TITLE   8086 Code Template (for EXE file)
 
+       #MAKE_EXE#
+
+NAME "PRINTER" 
+   
 DATA SEGMENT
     
      SCAN_MSG DB 'SCAN YOUR TEMPERATURE'
